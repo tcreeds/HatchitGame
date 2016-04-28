@@ -12,13 +12,16 @@
 **
 **/
 
-#ifdef HT_SYS_LINUX
+#ifdef VK_SUPPORT
+#include <ht_vkrenderer.h>
 #include <ht_vkmaterial.h>
 #include <ht_vkmesh.h>
-#else
-//#include <ht_d3d12material.h>
-#include <ht_vkmaterial.h>
-#include <ht_vkmesh.h>
+#endif
+
+#ifdef HT_SYS_WINDOWS
+#ifdef DX12_SUPPORT
+#include <ht_d3d12material.h>
+#endif
 #endif
 
 #include <ht_gameobject.h>
@@ -160,12 +163,6 @@ namespace Hatchit {
         */
         bool LightComponent::SetMeshAndMaterial(std::string meshFile, std::string materialFile)
         {
-#ifdef HT_SYS_LINUX
-            if (renderer == "OPENGL")
-                return false;
-            else if (renderer == "VULKAN")
-                mat = Graphics::Vulkan::VKMaterial::GetHandle(materialFile, materialFile).StaticCastHandle<Graphics::IMaterial>();
-#else
             if (Renderer::GetRendererType() == Graphics::DIRECTX11)
                 return false;
             else if (Renderer::GetRendererType() == Graphics::DIRECTX12)
@@ -175,13 +172,13 @@ namespace Hatchit {
             {
                 Resource::ModelHandle model = Resource::Model::GetHandleFromFileName(meshFile);
                 std::vector<Resource::Mesh*> meshes = model->GetMeshes();
-                m_mesh = Graphics::Vulkan::VKMesh::GetHandle(meshFile, meshes[0]).StaticCastHandle<Graphics::IMesh>();
 
-                m_material = Graphics::Vulkan::VKMaterial::GetHandle(materialFile, materialFile).StaticCastHandle<Graphics::IMaterial>();
+                Graphics::Vulkan::VKRenderer* renderer = dynamic_cast<Graphics::Vulkan::VKRenderer*>(Renderer::instance().GetRenderer());
+                m_mesh = Graphics::Vulkan::VKMesh::GetHandle(meshFile, meshes[0], renderer).StaticCastHandle<Graphics::IMesh>();
+                m_material = Graphics::Vulkan::VKMaterial::GetHandle(materialFile, materialFile, renderer).StaticCastHandle<Graphics::IMaterial>();
             }
             else if (Renderer::GetRendererType() == Graphics::OPENGL)
                 return false;
-#endif      
             return true;
         }
     }
