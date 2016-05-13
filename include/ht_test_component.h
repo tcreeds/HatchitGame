@@ -15,6 +15,7 @@
 #pragma once
 
 #include <ht_component.h>
+#include <ht_gameobject.h>
 namespace Hatchit {
     namespace Game {
 

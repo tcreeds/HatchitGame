@@ -15,8 +15,7 @@
 #include <ht_test_component.h>
 #include <ht_debug.h>
 #include <ht_scene.h>
-
-#include <Python.h>
+#include <ht_python.h>
 
 namespace Hatchit {
     namespace Game {
@@ -26,35 +25,43 @@ namespace Hatchit {
         }
         bool TestComponent::VDeserialize(const Core::JSON& jsonObject)
         {
-            return false;
+            /* Fix SwigMethods to carry the callback ptrs when needed */
+            //SWIG_init();
+            return true;
         }
         void TestComponent::VOnInit()
         {
-            Py_Initialize();
-            auto name = PyBytes_FromString("../../VS2015/HatchitMath/HatchitMath.py");
-            auto module = PyImport_Import(name);
-            auto func = PyObject_GetAttrString(module, "Dot");
-            if (func && PyCallable_Check(func))
-            {
-                PyObject* args = PyTuple_New(2);
-                Math::Vector3 vec1;
-                Math::Vector3 vec2;
-                vec1.x = 0.5;
-                vec1.y = 0.5;
-                vec2.y = 1;
-                PyObject* pyvec1 = PyCapsule_New(&vec1, "_p_Vector", nullptr);
-                PyObject* pyvec2 = PyCapsule_New(&vec2, "_p_Vector", nullptr);
-                PyTuple_SetItem(args, 0, pyvec1);
-                PyTuple_SetItem(args, 1, pyvec2);
-                PyObject* pyval = PyObject_CallObject(func, args);
-                float val = (float)PyFloat_AsDouble(pyval);
-            }
 
+            
             HT_DEBUG_PRINTF("Initialized Test Component.\n");
         }
 
         void TestComponent::VOnUpdate()
         {
+            Math::Vector3 position = m_owner->GetTransform().GetPosition();
+            Py_Initialize();
+            auto module = PyImport_ImportModule("TestComponent");
+            if (module == nullptr)
+            {
+                PyErr_Print();
+            }
+            auto func = PyObject_GetAttrString(module, "Update");
+            PyObject* result;
+            if (func && PyCallable_Check(func))
+            {
+                PyObject* args = PyTuple_New(1);
+                auto type = SWIG_TypeQuery("Hatchit::Math::Vector3 *");
+                PyObject* pyvec1 = SWIG_NewPointerObj(&position, type, SWIG_POINTER_OWN);
+                PyTuple_SetItem(args, 0, pyvec1);
+                result = PyObject_CallObject(func, args);
+                if (!result)
+                {
+                    HT_DEBUG_PRINTF("Python script error.\n");
+                    PyErr_Print();
+                }
+            }
+            Transform* t = &m_owner->GetTransform();
+            t->SetPosition(position);
             HT_DEBUG_PRINTF("Updated Test Component.\n");
         }
 
