@@ -1,6 +1,6 @@
 /**
 **    Hatchit Engine
-**    Copyright(c) 2015 Third-Degree
+**    Copyright(c) 2015-2016 Third-Degree
 **
 **    GNU Lesser General Public License
 **    This file may be used under the terms of the GNU Lesser
@@ -20,6 +20,7 @@
 #include <ht_time_singleton.h>
 #include <ht_input_singleton.h>
 #include <ht_scenemanager_singleton.h>
+#include <ht_audioemitter_singleton.h>
 
 namespace Hatchit {
 
@@ -48,8 +49,6 @@ namespace Hatchit {
                 Window::PollEvents();
 
                 SceneManager::Update();
-
-                Renderer::ClearBuffer(ClearArgs::ColorDepthStencil);
 
                 Renderer::Render();
 
@@ -182,6 +181,8 @@ namespace Hatchit {
             if (!Renderer::Initialize(rparams))
                 return false;
 
+            if (!AudioEmitter::Initialize())
+                return false;
 
             Input::Initialize();
 
